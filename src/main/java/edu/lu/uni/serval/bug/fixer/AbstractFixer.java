@@ -298,7 +298,9 @@ public abstract class AbstractFixer implements IFixer {
 			if (testResult.isEmpty()) continue;
 			
 			if (NumberUtils.isDigits(testResult.substring(0, 1))) {
-				testResult = testResult.substring(testResult.indexOf(" "), testResult.length() - 1).trim();
+				int index = testResult.indexOf(") ");
+				if (index <= 0) continue;
+				testResult = testResult.substring(index + 1, testResult.length() - 1).trim();
 				int indexOfLeftParenthesis = testResult.indexOf("(");
 				String testCase = testResult.substring(0, indexOfLeftParenthesis);
 				String testClass = testResult.substring(indexOfLeftParenthesis + 1);
