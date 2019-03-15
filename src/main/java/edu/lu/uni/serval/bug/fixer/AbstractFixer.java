@@ -188,12 +188,27 @@ public abstract class AbstractFixer implements IFixer {
         return scn;
 	}
 
+	protected List<Patch> triedPatchCandidates = new ArrayList<>();
+	
 	protected void testGeneratedPatches(List<Patch> patchCandidates, SuspCodeNode scn) {
 		// Testing generated patches.
 		for (Patch patch : patchCandidates) {
-			patchId++;
-			
+			patch.buggyFileName = scn.suspiciousJavaFile;
 			addPatchCodeToFile(scn, patch);// Insert the patch.
+			if (this.triedPatchCandidates.contains(patch)) {
+				try {
+					scn.targetJavaFile.delete();
+					scn.targetClassFile.delete();
+					Files.copy(scn.javaBackup.toPath(), scn.targetJavaFile.toPath());
+					Files.copy(scn.classBackup.toPath(), scn.targetClassFile.toPath());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				continue;
+			}
+			patchId++;
+			this.triedPatchCandidates.add(patch);
+			
 			String buggyCode = patch.getBuggyCodeStr();
 			if ("===StringIndexOutOfBoundsException===".equals(buggyCode)) continue;
 			String patchCode = patch.getFixedCodeStr1();
@@ -311,6 +326,8 @@ public abstract class AbstractFixer implements IFixer {
 	}
 
 	private void addPatchCodeToFile(SuspCodeNode scn, Patch patch) {
+String javaCode = FileHelper.readFile(scn.javaBackup);
+        
 		String fixedCodeStr1 = patch.getFixedCodeStr1();
 		String fixedCodeStr2 = patch.getFixedCodeStr2();
 		int exactBuggyCodeStartPos = patch.getBuggyCodeStartPos();
@@ -318,18 +335,41 @@ public abstract class AbstractFixer implements IFixer {
 		String patchCode = fixedCodeStr1;
 		boolean needBuggyCode = false;
 		if (exactBuggyCodeEndPos > exactBuggyCodeStartPos) {
-			needBuggyCode = true;
-			if (exactBuggyCodeStartPos < 0 ) {
-				exactBuggyCodeStartPos = scn.startPos;
-				exactBuggyCodeEndPos = scn.endPos;
+			if ("MOVE-BUGGY-STATEMENT".equals(fixedCodeStr2)) {
+				// move statement position.
+			} else if (exactBuggyCodeStartPos != -1 && exactBuggyCodeStartPos < scn.startPos) {
+				// Remove the buggy method declaration.
+			} else {
+				needBuggyCode = true;
+				if (exactBuggyCodeStartPos == 0) {
+					// Insert the missing override method, the buggy node is TypeDeclaration.
+					int pos = scn.suspCodeAstNode.getPos() + scn.suspCodeAstNode.getLength() - 1;
+					for (int i = pos; i >= 0; i --) {
+						if (javaCode.charAt(i) == '}') {
+							exactBuggyCodeStartPos = i;
+							exactBuggyCodeEndPos = i + 1;
+							break;
+						}
+					}
+				} else if (exactBuggyCodeStartPos == -1 ) {
+					// Insert generated patch code before the buggy code.
+					exactBuggyCodeStartPos = scn.startPos;
+					exactBuggyCodeEndPos = scn.endPos;
+				} else {
+					// Insert a block-held statement to surround the buggy code
+				}
 			}
 		} else if (exactBuggyCodeStartPos == -1 && exactBuggyCodeEndPos == -1) {
+			// Replace the buggy code with the generated patch code.
 			exactBuggyCodeStartPos = scn.startPos;
 			exactBuggyCodeEndPos = scn.endPos;
 		} else if (exactBuggyCodeStartPos == exactBuggyCodeEndPos) {
+			// Remove buggy variable declaration statement.
 			exactBuggyCodeStartPos = scn.startPos;
 		}
-        String javaCode = FileHelper.readFile(scn.javaBackup);
+		
+		patch.setBuggyCodeStartPos(exactBuggyCodeStartPos);
+		patch.setBuggyCodeEndPos(exactBuggyCodeEndPos);
         String buggyCode;
 		try {
 			buggyCode = javaCode.substring(exactBuggyCodeStartPos, exactBuggyCodeEndPos);

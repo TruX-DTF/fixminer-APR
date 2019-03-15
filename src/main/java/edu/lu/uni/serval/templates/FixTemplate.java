@@ -17,7 +17,7 @@ import edu.lu.uni.serval.utils.Checker;
 public abstract class FixTemplate implements IFixTemplate {
 	
 	protected String sourceCodePath;
-	private String suspJavaFileCode = null;
+	protected String suspJavaFileCode = null;
 	
 	private String suspiciousCodeStr;
 	private ITree suspiciousCodeTree;

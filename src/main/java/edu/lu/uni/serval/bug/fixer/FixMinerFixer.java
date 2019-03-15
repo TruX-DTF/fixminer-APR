@@ -11,6 +11,8 @@ import edu.lu.uni.serval.fixminer.ProjectLiteral;
 import edu.lu.uni.serval.fixminer.insertTemplate.InsertIfNonNullCheck;
 import edu.lu.uni.serval.fixminer.insertTemplate.InsertIfNullCheck;
 import edu.lu.uni.serval.fixminer.insertTemplate.InsertIfSizeCheck;
+import edu.lu.uni.serval.fixminer.insertTemplate.StatementInserter;
+import edu.lu.uni.serval.fixminer.insertTemplate.StatementMover;
 import edu.lu.uni.serval.patch.Patch;
 import edu.lu.uni.serval.templates.FixTemplate;
 import edu.lu.uni.serval.utils.Checker;
@@ -186,6 +188,14 @@ public class FixMinerFixer extends AbstractFixer {
 		
 		if (minErrorTest == 0) return;
 		ft = new InsertIfSizeCheck();
+		generatePatches(ft, scn);
+		
+		if (minErrorTest == 0) return;
+		ft = new StatementInserter();
+		generatePatches(ft, scn);
+		
+		if (minErrorTest == 0) return;
+		ft = new StatementMover();
 		generatePatches(ft, scn);
 		
 		if (minErrorTest == 0) return;

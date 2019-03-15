@@ -21,6 +21,7 @@ public class Patch {
 	 * 		fixedCodeStr1 + buggCodeStr + fixedCodeStr2;
 	 */
 	private int buggyCodeEndPos = -1;
+	public String buggyFileName;
 
 	public String getBuggyCodeStr() {
 		return buggyCodeStr;
