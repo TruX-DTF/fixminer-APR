@@ -1,6 +1,26 @@
 # fixminerAPR
 
-# FixMiner APR tool.
+## Build
+
+Dependency: clone and install JavaCodeParser
+
+```
+git clone https://github.com/AutoProRepair/JavaCodeParser/
+cd JavaCodeParser
+mvn install -DskipTests
+```
+
+Then, install fixminer-APR
+
+```
+git clone https://github.com/SerVal-DTF/fixminer-APR/
+cd fixminer-APR
+mvn install -DskipTests
+```
+
+
+
+## Run
 
 Usage:
 
